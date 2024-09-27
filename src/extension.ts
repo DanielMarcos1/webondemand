@@ -10,6 +10,29 @@ export function activate(context: vscode.ExtensionContext) {
 	// This line of code will only be executed once when your extension is activated
 	console.log('Congratulations, your extension "webondemand" is now active!');
 
+	// Register URI handler
+	vscode.window.registerUriHandler({
+		handleUri(uri: vscode.Uri) {
+			const apiKey = uri.query.split('&')[0].split('=')[1]; // Parse API key
+			const htmlCode = decodeURIComponent(uri.query.split('&')[1].split('=')[1]);
+			const cssCode = decodeURIComponent(uri.query.split('&')[2].split('=')[1]);
+			const jsCode = decodeURIComponent(uri.query.split('&')[3].split('=')[1]);
+
+			// Open each code type in a new editor tab
+			const openFileWithCode = (fileName: string, content: string) => {
+				const tempUri = vscode.Uri.file(`/path/to/${fileName}`);
+				vscode.workspace.fs.writeFile(tempUri, Buffer.from(content)).then(() => {
+					vscode.workspace.openTextDocument(tempUri).then(doc => {
+						vscode.window.showTextDocument(doc);
+					});
+				});
+			};
+			openFileWithCode("file.html", htmlCode);
+			openFileWithCode("file.css", cssCode);
+			openFileWithCode("file.js", jsCode);
+		}
+	});
+
 	// The command has been defined in the package.json file
 	// Now provide the implementation of the command with registerCommand
 	// The commandId parameter must match the command field in package.json
