@@ -16,12 +16,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "webondemand.helloWorld",
-        "title": "Hello World"
-      },
-      {
-        "command": "extension.openWithCode",
-        "title": "Open with code from Web"
+        "command": "extension.sendCode",
+        "title": "Send code to Web"
       }
     ]
   },

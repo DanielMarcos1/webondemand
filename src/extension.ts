@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			// Open each code type in a new editor tab
 			const openFileWithCode = (fileName: string, content: string) => {
-				const tempUri = vscode.Uri.file(`/path/to/${fileName}`);
+				const tempUri = vscode.Uri.parse(`untitled:${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}/${fileName}`);
 				vscode.workspace.fs.writeFile(tempUri, Buffer.from(content)).then(() => {
 					vscode.workspace.openTextDocument(tempUri).then(doc => {
 						vscode.window.showTextDocument(doc);
@@ -33,16 +33,32 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	const disposable = vscode.commands.registerCommand('webondemand.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from WebOnDemand!');
-	});
+	// Function to send the edited code back to the Web On Demand server
+    const sendToServer = (apiKey: string, html: string, css: string, js: string) => {
+        const data = { apiKey, html, css, js };
+        fetch('https://your-server.com/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => vscode.window.showInformationMessage('Upload successful!'))
+        .catch(error => vscode.window.showErrorMessage('Error uploading code: ' + error.message));
+    };
 
-	context.subscriptions.push(disposable);
+	const sendCodeCommand = vscode.commands.registerCommand('extension.sendCode', () => {
+		const htmlDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.includes('file.html'));
+		const cssDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.includes('file.css'));
+		const jsDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.includes('file.js'));
+	
+		if (htmlDoc && cssDoc && jsDoc) {
+			sendToServer('your-api-key', htmlDoc.getText(), cssDoc.getText(), jsDoc.getText());
+		} else {
+			vscode.window.showErrorMessage('Cannot find the required documents.');
+		}
+	});
+	
+	context.subscriptions.push(sendCodeCommand);
 }
 
 // This method is called when your extension is deactivated
