@@ -1,31 +1,18 @@
 # webondemand README
 
-This is the README for your extension "webondemand". After writing up a brief description, we recommend including the following sections.
+This extension makes easier to use VSCode along with Web On Demand platform.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+When you click "Open VSCode" in the Web on Demand menu, it will open a new VSCode instance with the Web on Demand workspace with the files of your web page.
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+Use VSCode 1.93.0 or higher.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+Some commands to be later documented
 
 ## Known Issues
 
