@@ -3,6 +3,7 @@
   "displayName": "WebOnDemand",
   "description": "This extension allow users to open their webondemand pages on vscode for easier code editing",
   "version": "0.0.1",
+  "publisher": "WebOnDemand",
   "repository": {
     "type": "git",
     "url": "https://github.com/DanielMarcos1/webondemand"
