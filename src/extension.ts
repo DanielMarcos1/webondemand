@@ -5,60 +5,85 @@ import * as vscode from 'vscode';
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "webondemand" is now active!');
+	console.log('WebOnDemand extension is now active!');
 
 	// Register URI handler
-	vscode.window.registerUriHandler({
+	const uriHandler = vscode.window.registerUriHandler({
 		handleUri(uri: vscode.Uri) {
-			const apiKey = uri.query.split('&')[0].split('=')[1]; // Parse API key
-			const htmlCode = decodeURIComponent(uri.query.split('&')[1].split('=')[1]);
-			const cssCode = decodeURIComponent(uri.query.split('&')[2].split('=')[1]);
-			const jsCode = decodeURIComponent(uri.query.split('&')[3].split('=')[1]);
+			console.log('Received URI:', uri.toString());
+			vscode.window.showInformationMessage(`Received URI: ${uri.toString()}`);
+			try {
+				const params = new URLSearchParams(uri.query);
+				const apiKey = params.get('apiKey');
+				const htmlCode = decodeURIComponent(params.get('html') || '');
+				const cssCode = decodeURIComponent(params.get('css') || '');
+				const jsCode = decodeURIComponent(params.get('js') || '');
 
-			// Open each code type in a new editor tab
-			const openFileWithCode = (fileName: string, content: string) => {
-				const tempUri = vscode.Uri.parse(`untitled:${vscode.workspace.workspaceFolders?.[0]?.uri.fsPath}/${fileName}`);
-				vscode.workspace.fs.writeFile(tempUri, Buffer.from(content)).then(() => {
-					vscode.workspace.openTextDocument(tempUri).then(doc => {
-						vscode.window.showTextDocument(doc);
-					});
-				});
-			};
-			openFileWithCode("file.html", htmlCode);
-			openFileWithCode("file.css", cssCode);
-			openFileWithCode("file.js", jsCode);
+				createAndOpenFiles(apiKey, htmlCode, cssCode, jsCode);
+			} catch (error) {
+				console.error('Error handling the URI:', error);
+				vscode.window.showErrorMessage('Error processing the incoming URI');
+			}
 		}
 	});
 
-	// Function to send the edited code back to the Web On Demand server
-    const sendToServer = (apiKey: string, html: string, css: string, js: string) => {
-        const data = { apiKey, html, css, js };
-        fetch('https://your-server.com/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(result => vscode.window.showInformationMessage('Upload successful!'))
-        .catch(error => vscode.window.showErrorMessage('Error uploading code: ' + error.message));
-    };
+	context.subscriptions.push(uriHandler);
 
-	const sendCodeCommand = vscode.commands.registerCommand('extension.sendCode', () => {
-		const htmlDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.includes('file.html'));
-		const cssDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.includes('file.css'));
-		const jsDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.includes('file.js'));
-	
-		if (htmlDoc && cssDoc && jsDoc) {
-			sendToServer('your-api-key', htmlDoc.getText(), cssDoc.getText(), jsDoc.getText());
-		} else {
-			vscode.window.showErrorMessage('Cannot find the required documents.');
-		}
+	// Register commands
+	const sendCodeCommand = vscode.commands.registerCommand('extension.sendCode', sendToServer);
+	const testUriCommand = vscode.commands.registerCommand('extension.testUri', testUri);
+
+	context.subscriptions.push(sendCodeCommand, testUriCommand);
+}
+
+function createAndOpenFiles(apiKey: string | null, htmlCode: string, cssCode: string, jsCode: string) {
+	vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'webondemand')).then(() => {
+		const folderUri = vscode.Uri.joinPath(vscode.workspace.workspaceFolders![0].uri, 'webondemand');
+		openFileWithCode(folderUri, "index.html", htmlCode);
+		openFileWithCode(folderUri, "styles.css", cssCode);
+		openFileWithCode(folderUri, "script.js", jsCode);
+	}, (error: Error) => {
+		console.error('Error creating folder:', error);
+		vscode.window.showErrorMessage('Error creating folder: ' + error.message);
 	});
-	
-	context.subscriptions.push(sendCodeCommand);
+}
+
+function openFileWithCode(folderUri: vscode.Uri, fileName: string, content: string) {
+	const filePath = vscode.Uri.joinPath(folderUri, fileName);
+	vscode.workspace.fs.writeFile(filePath, Buffer.from(content)).then(() => {
+		vscode.window.showTextDocument(filePath);
+	});
+}
+
+function sendToServer() {
+	const htmlDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.endsWith('index.html'));
+	const cssDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.endsWith('styles.css'));
+	const jsDoc = vscode.workspace.textDocuments.find(doc => doc.fileName.endsWith('script.js'));
+
+	if (htmlDoc && cssDoc && jsDoc) {
+		const apiKey = 'your-api-key'; // You might want to store this securely or prompt the user
+		sendCodeToServer(apiKey, htmlDoc.getText(), cssDoc.getText(), jsDoc.getText());
+	} else {
+		vscode.window.showErrorMessage('Cannot find the required documents.');
+	}
+}
+
+function sendCodeToServer(apiKey: string, html: string, css: string, js: string) {
+	const data = { apiKey, html, css, js };
+	fetch('https://your-server.com/api/upload', {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(data)
+	})
+	.then(response => response.json())
+	.then(result => vscode.window.showInformationMessage('Upload successful!'))
+	.catch(error => vscode.window.showErrorMessage('Error uploading code: ' + error.message));
+}
+
+function testUri() {
+	const testUri = vscode.Uri.parse('vscode://webondemand.webondemand?apiKey=testKey&html=TestHtml&css=TestCss&js=TestJs');
+	vscode.window.showInformationMessage('Test URI command executed. Check if your browser opened.');
+	vscode.env.openExternal(testUri);
 }
 
 // This method is called when your extension is deactivated

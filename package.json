@@ -18,6 +18,10 @@
       {
         "command": "extension.sendCode",
         "title": "Send code to Web"
+      },
+      {
+        "command": "extension.testUri",
+        "title": "Test WebOnDemand URI"
       }
     ]
   },
